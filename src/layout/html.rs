@@ -23,7 +23,3 @@ pub fn parse_html_doc() -> std::rc::Rc<Node> {
 
   return dom.document;
 }
-
-// fn find_body_node(document: Node) {
-
-// }

@@ -5,11 +5,37 @@
 
 // Data structures:
 
+use super::dom::ElementData;
 use crate::gfx::colors::Color;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Stylesheet {
   pub rules: Vec<Rule>,
+}
+
+impl Stylesheet {
+  fn find_matching_rules(&self, data: &ElementData) -> Vec<MatchedRule> {
+    self
+      .rules
+      .iter()
+      .filter_map(|rule| find_rule_matches(rule, data))
+      .collect()
+  }
+
+  pub fn specified_values_for_element(&self, data: &ElementData) -> super::style::StylePropertyMap {
+    let mut values = HashMap::new();
+    let mut rules = self.find_matching_rules(data);
+
+    // Go through the rules from lowest to highest specificity.
+    rules.sort_by(|&(a, _), &(b, _)| a.cmp(&b));
+    for (_, rule) in rules {
+      for declaration in &rule.declarations {
+        values.insert(declaration.name.clone(), declaration.value.clone());
+      }
+    }
+    return values;
+  }
 }
 
 #[derive(Debug)]
@@ -18,9 +44,28 @@ pub struct Rule {
   pub declarations: Vec<Declaration>,
 }
 
+type MatchedRule<'a> = (Specificity, &'a Rule);
+
+// NOTE: this is not an impl to prevent a lifetime rabbit hole that bubbles up to `Stylesheet`
+fn find_rule_matches<'a>(rule: &'a Rule, data: &ElementData) -> Option<MatchedRule<'a>> {
+  rule
+    .selectors
+    .iter()
+    .find(|selector| selector.matches_with_element_data(data))
+    .map(|selector| (selector.specificity(), rule))
+}
+
 #[derive(Debug)]
 pub enum Selector {
   Simple(SimpleSelector),
+}
+
+impl Selector {
+  fn matches_with_element_data(&self, data: &ElementData) -> bool {
+    match self {
+      Selector::Simple(selector) => return selector.matches_with_element_data(data),
+    }
+  }
 }
 
 #[derive(Debug)]
@@ -28,6 +73,31 @@ pub struct SimpleSelector {
   pub tag_name: Option<String>,
   pub id: Option<String>,
   pub class: Vec<String>,
+}
+
+impl SimpleSelector {
+  fn matches_with_element_data(&self, data: &ElementData) -> bool {
+    // Check type selector
+    if self.tag_name.iter().any(|name| data.tag_name != *name) {
+      return false;
+    }
+
+    // Check ID selector
+    if self.id.iter().any(|id| data.id() != Some(id)) {
+      return false;
+    }
+
+    // Check class selectors
+    if let Some(elem_classes) = data.classlist() {
+      return !self
+        .class
+        .iter()
+        .any(|class| !elem_classes.contains(&**class));
+    }
+
+    // We didn't find any non-matching selector components.
+    return true;
+  }
 }
 
 #[derive(Debug)]

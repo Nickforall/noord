@@ -6,8 +6,9 @@ pub mod style;
 
 pub fn layout_pipeline() {
   let rcdom = html::parse_html_doc();
-  let noord_dom = dom::serialize_rc_dom(rcdom);
+  let dom = dom::serialize_rc_dom(rcdom);
   let stylesheet = css::parse(String::from(include_str!("../../support/style.css")));
+  let style_tree = style::create_styletree(&dom, &stylesheet);
 
-  println!("{:#?}", stylesheet)
+  println!("{:#?}", style_tree);
 }

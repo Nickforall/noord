@@ -1,19 +1,27 @@
 use std::collections::HashMap;
 
-use super::dom::Node;
+use super::dom::{Node, NodeType};
 
-type StylePropertyMap = HashMap<String, String>;
+pub type StylePropertyMap = HashMap<String, crate::layout::css::Value>;
 
+#[derive(Debug)]
 pub struct StyledNode<'a> {
   values: StylePropertyMap,
   node: &'a Node,
   children: Vec<StyledNode<'a>>,
 }
 
-pub fn style_tree<'a>(root: &'a Node) -> StyledNode<'a> {
+pub fn create_styletree<'a>(root: &'a Node, stylesheet: &super::css::Stylesheet) -> StyledNode<'a> {
   StyledNode {
-      node: root,
-      values: HashMap::new(),
-      children: root.children.iter().map(|child| style_tree(&child)).collect(),
+    node: root,
+    values: match root.node_type {
+      NodeType::Element(ref data) => stylesheet.specified_values_for_element(data),
+      _ => HashMap::new(),
+    },
+    children: root
+      .children
+      .iter()
+      .map(|child| create_styletree(&child, stylesheet))
+      .collect(),
   }
 }

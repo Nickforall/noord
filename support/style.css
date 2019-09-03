@@ -1,3 +1,15 @@
+* {
+  background-color: #000000;
+}
+
+head {
+  display: none;
+}
+
+body {
+  background-color: #111111;
+}
+
 .box {
   background-color: #ff0000;
 }
