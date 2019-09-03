@@ -52,7 +52,7 @@ pub fn serialize_rc_dom(root: Rc<rcdom::Node>) -> Node {
     rcdom::NodeData::Document => {
       return document(element.children.clone().into_inner().into_iter().map(|child| serialize_rc_dom(child)).collect())
     },
-    rcdom::NodeData::Element { name, attrs, template_contents, mathml_annotation_xml_integration_point } => {
+    rcdom::NodeData::Element { name, attrs: _, template_contents: _, mathml_annotation_xml_integration_point: _ } => {
       return elem(String::from(&*name.local), HashMap::new(), element.children.clone().into_inner().into_iter().map(|child| serialize_rc_dom(child)).collect())
     },
     rcdom::NodeData::Text { contents } => {
