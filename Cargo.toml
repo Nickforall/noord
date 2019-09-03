@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 glium = "*"
+html5ever = "0.24.0"

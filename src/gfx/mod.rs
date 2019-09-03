@@ -34,7 +34,8 @@ fn opaque_shader(display: glium::Display) -> glium::Program {
   program
 }
 
-pub fn draw_rect(display: glium::Display, target: &mut glium::Frame, x: i32, y: i32, w: i32, h: i32,) {
+pub fn draw_rect(display: glium::Display, target: &mut glium::Frame, x: i32, y: i32, w: i32, h: i32, color: Option<Color>) {
+    let color = color.unwrap_or(Color::black());
     let program = opaque_shader(display.clone());
 
     let dimensions = display.get_framebuffer_dimensions();
@@ -49,7 +50,7 @@ pub fn draw_rect(display: glium::Display, target: &mut glium::Frame, x: i32, y: 
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleFan);
 
     let uniforms = uniform! {
-      in_color: Color::black()
+      in_color: color
     };
 
     target.draw(&vertex_buffer, &indices, &program, &uniforms,

@@ -1,14 +1,16 @@
 #[macro_use]
 extern crate glium;
+extern crate html5ever;
 
 mod gfx;
+mod layout;
 
 use glium::glutin;
 use glium::Surface;
 
 fn main() {
 
-
+    layout::layout_pipeline();
 
     // 1. The **winit::EventsLoop** for handling events.
     let mut events_loop = glutin::EventsLoop::new();
@@ -25,8 +27,8 @@ fn main() {
         let mut target = display.draw();
         target.clear_color(1.0, 1.0, 1.0, 1.0);
 
-        gfx::draw_rect(display.clone(), &mut target, 10, 10, 200, 200);
-        gfx::draw_rect(display.clone(), &mut target, 400, 400, 200, 200);
+        gfx::draw_rect(display.clone(), &mut target, 10, 10, 200, 200, None);
+        gfx::draw_rect(display.clone(), &mut target, 400, 400, 200, 200, Some(gfx::colors::Color::blue()));
 
         target.finish().unwrap();
 
