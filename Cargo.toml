@@ -1,0 +1,8 @@
+[package]
+name = "noord"
+version = "0.1.0"
+authors = ["Nick Vernij <hello@nickforall.nl>"]
+edition = "2018"
+
+[dependencies]
+glium = "*"
