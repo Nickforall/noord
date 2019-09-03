@@ -4,7 +4,7 @@ use html5ever::rcdom;
 use std::rc::Rc;
 
 #[derive(Debug)]
-struct ElementData {
+pub struct ElementData {
     tag_name: String,
     attributes: AttrMap,
 }
