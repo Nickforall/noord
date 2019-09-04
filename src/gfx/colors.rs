@@ -1,4 +1,4 @@
-#[derive(Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct Color {
   pub g: u8,
   pub b: u8,
@@ -30,6 +30,10 @@ impl Color {
   pub fn blue() -> Self {
     Color::new_alpha(0, 0, 255, 255)
   }
+
+  pub fn transparent() -> Self {
+    Color::new_alpha(0, 0, 0, 0)
+  }
 }
 
 use glium::uniforms::{AsUniformValue, UniformValue};
@@ -47,6 +51,13 @@ impl AsUniformValue for Color {
 
 impl std::fmt::Debug for Color {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "rgba({}, {}, {}, {:?})", self.r, self.g, self.b, (self.a / 255))
+    write!(
+      f,
+      "rgba({}, {}, {}, {:?})",
+      self.r,
+      self.g,
+      self.b,
+      (self.a / 255)
+    )
   }
 }

@@ -7,7 +7,7 @@
 
 use super::dom::ElementData;
 use crate::gfx::colors::Color;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct Stylesheet {
@@ -34,6 +34,7 @@ impl Stylesheet {
         values.insert(declaration.name.clone(), declaration.value.clone());
       }
     }
+
     return values;
   }
 }
@@ -48,11 +49,13 @@ type MatchedRule<'a> = (Specificity, &'a Rule);
 
 // NOTE: this is not an impl to prevent a lifetime rabbit hole that bubbles up to `Stylesheet`
 fn find_rule_matches<'a>(rule: &'a Rule, data: &ElementData) -> Option<MatchedRule<'a>> {
-  rule
+  let x = rule
     .selectors
     .iter()
     .find(|selector| selector.matches_with_element_data(data))
-    .map(|selector| (selector.specificity(), rule))
+    .map(|selector| (selector.specificity(), rule));
+
+  x
 }
 
 #[derive(Debug)]
@@ -88,11 +91,14 @@ impl SimpleSelector {
     }
 
     // Check class selectors
-    if let Some(elem_classes) = data.classlist() {
-      return !self
-        .class
-        .iter()
-        .any(|class| !elem_classes.contains(&**class));
+
+    let elem_classes = data.classlist().unwrap_or(HashSet::new());
+    if self
+      .class
+      .iter()
+      .any(|class| !elem_classes.contains(&**class))
+    {
+      return false;
     }
 
     // We didn't find any non-matching selector components.
@@ -264,7 +270,7 @@ impl Parser {
 
   fn parse_value(&mut self) -> Value {
     match self.next_char() {
-      '0'...'9' => self.parse_length(),
+      '0'..='9' => self.parse_length(),
       '#' => self.parse_color(),
       _ => Value::Keyword(self.parse_identifier()),
     }
@@ -276,7 +282,7 @@ impl Parser {
 
   fn parse_float(&mut self) -> f32 {
     let s = self.consume_while(|c| match c {
-      '0'...'9' | '.' => true,
+      '0'..='9' | '.' => true,
       _ => false,
     });
     s.parse().unwrap()

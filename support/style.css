@@ -1,17 +1,16 @@
 * {
-  background-color: #000000;
-}
-
-head {
-  display: none;
+  display: block;
+  padding: 50px;
 }
 
 body {
-  background-color: #111111;
+  background-color: #000000;
 }
 
 .box {
   background-color: #ff0000;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .green {
