@@ -122,6 +122,7 @@ pub enum Value {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Unit {
   Px,
+  Percentage
 }
 
 pub type Specificity = (usize, usize, usize);
@@ -143,6 +144,14 @@ impl Value {
     match *self {
       Value::Length(f, Unit::Px) => f,
       _ => 0.0,
+    }
+  }
+
+  // TODO: replace these contents and all occurences w/ to px
+  pub fn to_relative_px(&self, reference: f32) -> f32 {
+    match *self {
+      Value::Length(f, Unit::Percentage) => (f / 100.0) * reference,
+      _ => self.to_px()
     }
   }
 }
@@ -289,6 +298,11 @@ impl Parser {
   }
 
   fn parse_unit(&mut self) -> Unit {
+    if self.next_char() == '%' {
+      self.consume_char();
+      return Unit::Percentage
+    }
+
     match &*self.parse_identifier().to_ascii_lowercase() {
       "px" => Unit::Px,
       _ => panic!("unrecognized unit"),

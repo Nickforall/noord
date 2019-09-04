@@ -68,6 +68,24 @@ impl std::fmt::Debug for Rect {
   }
 }
 
+struct SimpleDimensions {
+  pub width: f32,
+  pub height: f32,
+}
+
+impl SimpleDimensions {
+  pub fn new(width: f32, height: f32) -> Self {
+    SimpleDimensions { width, height }
+  }
+
+  pub fn from_dimension(rect: Rect) -> Self {
+    SimpleDimensions {
+      width: rect.width,
+      height: rect.height,
+    }
+  }
+}
+
 #[derive(Default, Copy, Clone)]
 pub struct EdgeSizes {
   left: f32,
@@ -143,24 +161,24 @@ impl<'a> LayoutBox<'a> {
   }
 
   // Lay out a box and its descendants.
-  fn layout(&mut self, containing_block: Dimensions) {
+  fn layout(&mut self, containing_block: Dimensions, original_containing_block: &SimpleDimensions) {
     match self.box_type {
-      BoxType::BlockNode(_) => self.layout_block(containing_block),
+      BoxType::BlockNode(_) => self.layout_block(containing_block, original_containing_block),
       BoxType::InlineNode(_) => {}  // TODO
       BoxType::AnonymousBlock => {} // TODO
     }
   }
 
-  fn layout_block(&mut self, containing_block: Dimensions) {
+  fn layout_block(&mut self, containing_block: Dimensions, original_containing_block: &SimpleDimensions) {
     // Child width can depend on parent width, so we need to calculate
     // this box's width before laying out its children.
-    self.calculate_block_width(containing_block);
+    self.calculate_block_width(containing_block, original_containing_block);
 
     // Determine where the box is located within its container.
     self.calculate_block_position(containing_block);
 
     // Recursively lay out the children of this box.
-    self.layout_block_children();
+    self.layout_block_children(original_containing_block);
 
     // Parent height can depend on child height, so `calculate_height`
     // must be called *after* the children are laid out.
@@ -172,7 +190,7 @@ impl<'a> LayoutBox<'a> {
   /// http://www.w3.org/TR/CSS2/visudet.html#blockwidth
   ///
   /// Sets the horizontal margin/padding/border dimensions, and the `width`.
-  fn calculate_block_width(&mut self, containing_block: Dimensions) {
+  fn calculate_block_width(&mut self, containing_block: Dimensions, original_containing_block: &SimpleDimensions) {
     use Unit::Px;
     use Value::*;
 
@@ -204,7 +222,7 @@ impl<'a> LayoutBox<'a> {
       &width,
     ]
     .iter()
-    .map(|v| v.to_px())
+    .map(|v| v.to_relative_px(original_containing_block.width))
     .sum();
 
     // If width is not auto and the total is wider than the container, treat auto margins as 0.
@@ -316,10 +334,11 @@ impl<'a> LayoutBox<'a> {
   /// Lay out the block's children within its content area.
   ///
   /// Sets `self.dimensions.height` to the total content height.
-  fn layout_block_children(&mut self) {
+  fn layout_block_children(&mut self, parent_original_container: &SimpleDimensions) {
     let d = &mut self.dimensions;
+    let original_container = SimpleDimensions::from_dimension(d.content.clone());
     for child in &mut self.children {
-      child.layout(*d);
+      child.layout(*d, &original_container);
 
       // Increment the height so each child is laid out below the previous one.
       d.content.height = d.content.height + child.dimensions.padding_box().height;
@@ -364,12 +383,11 @@ pub fn layout_geometry_tree<'a>(
   mut containing_block: Dimensions,
 ) -> LayoutBox<'a> {
   // The layout algorithm expects the container height to start at 0.
-  // TODO: Save the initial containing block height, for calculating percent heights.
-  let container_height = containing_block.content.height;
+  let original_container = SimpleDimensions::from_dimension(containing_block.content);
   containing_block.content.height = 0.0;
 
   let mut root_box = build_geometry_tree(node);
-  root_box.layout(containing_block);
-  root_box.dimensions.content.height = container_height;
+  root_box.layout(containing_block, &original_container);
+  root_box.dimensions.content.height = original_container.height;
   return root_box;
 }
