@@ -122,7 +122,7 @@ pub enum Value {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Unit {
   Px,
-  Percentage
+  Percentage,
 }
 
 pub type Specificity = (usize, usize, usize);
@@ -140,18 +140,11 @@ impl Selector {
 
 impl Value {
   /// Return the size of a length in px, or zero for non-lengths.
-  pub fn to_px(&self) -> f32 {
-    match *self {
-      Value::Length(f, Unit::Px) => f,
-      _ => 0.0,
-    }
-  }
-
-  // TODO: replace these contents and all occurences w/ to px
-  pub fn to_relative_px(&self, reference: f32) -> f32 {
+  pub fn to_px(&self, reference: f32) -> f32 {
     match *self {
       Value::Length(f, Unit::Percentage) => (f / 100.0) * reference,
-      _ => self.to_px()
+      Value::Length(f, Unit::Px) => f,
+      _ => 0.0,
     }
   }
 }
@@ -300,7 +293,7 @@ impl Parser {
   fn parse_unit(&mut self) -> Unit {
     if self.next_char() == '%' {
       self.consume_char();
-      return Unit::Percentage
+      return Unit::Percentage;
     }
 
     match &*self.parse_identifier().to_ascii_lowercase() {

@@ -169,20 +169,24 @@ impl<'a> LayoutBox<'a> {
     }
   }
 
-  fn layout_block(&mut self, containing_block: Dimensions, original_containing_block: &SimpleDimensions) {
+  fn layout_block(
+    &mut self,
+    containing_block: Dimensions,
+    original_containing_block: &SimpleDimensions,
+  ) {
     // Child width can depend on parent width, so we need to calculate
     // this box's width before laying out its children.
     self.calculate_block_width(containing_block, original_containing_block);
 
     // Determine where the box is located within its container.
-    self.calculate_block_position(containing_block);
+    self.calculate_block_position(containing_block, original_containing_block);
 
     // Recursively lay out the children of this box.
     self.layout_block_children(original_containing_block);
 
     // Parent height can depend on child height, so `calculate_height`
     // must be called *after* the children are laid out.
-    self.calculate_block_height();
+    self.calculate_block_height(original_containing_block);
   }
 
   /// Calculate the width of a block-level non-replaced element in normal flow.
@@ -190,11 +194,17 @@ impl<'a> LayoutBox<'a> {
   /// http://www.w3.org/TR/CSS2/visudet.html#blockwidth
   ///
   /// Sets the horizontal margin/padding/border dimensions, and the `width`.
-  fn calculate_block_width(&mut self, containing_block: Dimensions, original_containing_block: &SimpleDimensions) {
+  fn calculate_block_width(
+    &mut self,
+    containing_block: Dimensions,
+    original_containing_block: &SimpleDimensions,
+  ) {
     use Unit::Px;
     use Value::*;
 
     let style = self.get_style_node();
+
+    let reference_containing_width = original_containing_block.width;
 
     // `width` has initial value `auto`.
     let auto = Value::Keyword("auto".to_string());
@@ -222,7 +232,7 @@ impl<'a> LayoutBox<'a> {
       &width,
     ]
     .iter()
-    .map(|v| v.to_relative_px(original_containing_block.width))
+    .map(|v| v.to_px(reference_containing_width))
     .sum();
 
     // If width is not auto and the total is wider than the container, treat auto margins as 0.
@@ -238,12 +248,15 @@ impl<'a> LayoutBox<'a> {
     // Adjust used values so that the above sum equals `containing_block.width`.
     // Each arm of the `match` should increase the total width by exactly `underflow`,
     // and afterward all values should be absolute lengths in px.
-    let underflow = containing_block.content.width - total;
+    let underflow = original_containing_block.width - total;
 
     match (width == auto, margin_left == auto, margin_right == auto) {
       // If the values are overconstrained, calculate margin_right.
       (false, false, false) => {
-        margin_right = Length(margin_right.to_px() + underflow, Px);
+        margin_right = Length(
+          margin_right.to_px(reference_containing_width) + underflow,
+          Px,
+        );
       }
 
       // If exactly one size is auto, its used value follows from the equality.
@@ -269,7 +282,10 @@ impl<'a> LayoutBox<'a> {
         } else {
           // Width can't be negative. Adjust the right margin instead.
           width = Length(0.0, Px);
-          margin_right = Length(margin_right.to_px() + underflow, Px);
+          margin_right = Length(
+            margin_right.to_px(reference_containing_width) + underflow,
+            Px,
+          );
         }
       }
 
@@ -281,16 +297,16 @@ impl<'a> LayoutBox<'a> {
     }
 
     let d = &mut self.dimensions;
-    d.content.width = width.to_px();
+    d.content.width = width.to_px(reference_containing_width);
 
-    d.padding.left = padding_left.to_px();
-    d.padding.right = padding_right.to_px();
+    d.padding.left = padding_left.to_px(reference_containing_width);
+    d.padding.right = padding_right.to_px(reference_containing_width);
 
-    d.border.left = border_left.to_px();
-    d.border.right = border_right.to_px();
+    d.border.left = border_left.to_px(reference_containing_width);
+    d.border.right = border_right.to_px(reference_containing_width);
 
-    d.margin.left = margin_left.to_px();
-    d.margin.right = margin_right.to_px();
+    d.margin.left = margin_left.to_px(reference_containing_width);
+    d.margin.right = margin_right.to_px(reference_containing_width);
   }
 
   /// Finish calculating the block's edge sizes, and position it within its containing block.
@@ -298,7 +314,11 @@ impl<'a> LayoutBox<'a> {
   /// http://www.w3.org/TR/CSS2/visudet.html#normal-block
   ///
   /// Sets the vertical margin/padding/border dimensions, and the `x`, `y` values.
-  fn calculate_block_position(&mut self, containing_block: Dimensions) {
+  fn calculate_block_position(
+    &mut self,
+    containing_block: Dimensions,
+    original_containing_block: &SimpleDimensions,
+  ) {
     use Unit::Px;
     use Value::*;
     let style = self.get_style_node();
@@ -307,19 +327,29 @@ impl<'a> LayoutBox<'a> {
     // margin, border, and padding have initial value 0.
     let zero = Length(0.0, Px);
 
+    let reference_containing_height = original_containing_block.height;
+
     // If margin-top or margin-bottom is `auto`, the used value is zero.
-    d.margin.top = style.lookup("margin-top", "margin", &zero).to_px();
-    d.margin.bottom = style.lookup("margin-bottom", "margin", &zero).to_px();
+    d.margin.top = style
+      .lookup("margin-top", "margin", &zero)
+      .to_px(reference_containing_height);
+    d.margin.bottom = style
+      .lookup("margin-bottom", "margin", &zero)
+      .to_px(reference_containing_height);
 
     d.border.top = style
       .lookup("border-top-width", "border-width", &zero)
-      .to_px();
+      .to_px(reference_containing_height);
     d.border.bottom = style
       .lookup("border-bottom-width", "border-width", &zero)
-      .to_px();
+      .to_px(reference_containing_height);
 
-    d.padding.top = style.lookup("padding-top", "padding", &zero).to_px();
-    d.padding.bottom = style.lookup("padding-bottom", "padding", &zero).to_px();
+    d.padding.top = style
+      .lookup("padding-top", "padding", &zero)
+      .to_px(reference_containing_height);
+    d.padding.bottom = style
+      .lookup("padding-bottom", "padding", &zero)
+      .to_px(reference_containing_height);
 
     d.content.x = containing_block.content.x + d.margin.left + d.border.left + d.padding.left;
 
@@ -334,7 +364,7 @@ impl<'a> LayoutBox<'a> {
   /// Lay out the block's children within its content area.
   ///
   /// Sets `self.dimensions.height` to the total content height.
-  fn layout_block_children(&mut self, parent_original_container: &SimpleDimensions) {
+  fn layout_block_children(&mut self, _: &SimpleDimensions) {
     let d = &mut self.dimensions;
     let original_container = SimpleDimensions::from_dimension(d.content.clone());
     for child in &mut self.children {
@@ -346,11 +376,11 @@ impl<'a> LayoutBox<'a> {
   }
 
   /// Height of a block-level non-replaced element in normal flow with overflow visible.
-  fn calculate_block_height(&mut self) {
+  fn calculate_block_height(&mut self, original_container: &SimpleDimensions) {
     // If the height is set to an explicit length, use that exact length.
     // Otherwise, just keep the value set by `layout_block_children`.
-    if let Some(Value::Length(h, Unit::Px)) = self.get_style_node().value("height") {
-      self.dimensions.content.height = h;
+    if let Some(value) = self.get_style_node().value("height") {
+      self.dimensions.content.height = value.to_px(original_container.height);
     }
   }
 }
@@ -383,7 +413,7 @@ pub fn layout_geometry_tree<'a>(
   mut containing_block: Dimensions,
 ) -> LayoutBox<'a> {
   // The layout algorithm expects the container height to start at 0.
-  let original_container = SimpleDimensions::from_dimension(containing_block.content);
+  let original_container = SimpleDimensions::from_dimension(containing_block.content.clone());
   containing_block.content.height = 0.0;
 
   let mut root_box = build_geometry_tree(node);

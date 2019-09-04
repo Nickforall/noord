@@ -41,7 +41,7 @@ fn render_background(list: &mut DisplayList, layout_box: &LayoutBox) {
 
     list.push(DisplayListCommand::Rect(
       color,
-      layout_box.dimensions.margin_box(),
+      layout_box.dimensions.padding_box(),
     ));
   }
 }

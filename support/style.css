@@ -4,13 +4,11 @@
 }
 
 body {
-  background-color: #000000;
+  background-color: #ffffff;
 }
 
 .box {
   background-color: #ff0000;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .green {
