@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate glium;
+extern crate getopts;
 extern crate html5ever;
 
 mod gfx;
@@ -7,8 +8,22 @@ mod layout;
 
 use glium::glutin;
 use glium::Surface;
+use std::fs::File;
+use std::io::Read;
 
 fn main() {
+    let mut opts = getopts::Options::new();
+    opts.optopt("h", "html", "HTML document", "FILENAME");
+    opts.optopt("c", "css", "CSS stylesheet", "FILENAME");
+
+    let matches = opts.parse(std::env::args().skip(1)).unwrap();
+    let html_path = matches
+        .opt_str("h")
+        .unwrap_or(String::from("support/dev.html"));
+    let css_path = matches
+        .opt_str("c")
+        .unwrap_or(String::from("support/style.css"));
+
     // 1. The **winit::EventsLoop** for handling events.
     let mut events_loop = glutin::EventsLoop::new();
     // 2. Parameters for building the Window.
@@ -19,9 +34,15 @@ fn main() {
     //    window with the events_loop.
     let display = glium::Display::new(wb, cb, &events_loop).unwrap();
 
-    // let geom_tree = &layout::layout_pipeline();
-    let rcdom = layout::html::parse_html_doc();
+    let rcdom = layout::html::parse_html_doc(html_path);
     let dom = layout::dom::serialize_rc_dom(rcdom);
+
+    let mut css_buffer = String::new();
+    File::open(css_path)
+        .unwrap()
+        .read_to_string(&mut css_buffer)
+        .unwrap();
+
     let stylesheet = layout::css::parse(String::from(include_str!("../support/style.css")));
     let style_tree = layout::style::create_styletree(&dom, &stylesheet);
 
