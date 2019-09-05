@@ -1,20 +1,22 @@
 * {
   display: block;
-  padding: 50px;
 }
 
 body {
+  background-color: #000000;
+  height: 100%;
+}
+
+.container {
   background-color: #ffffff;
+  margin-left: auto;
+  margin-right: auto;
+  width: 1200px;
+  height: 1000px;
 }
 
 .box {
-  background-color: #ff0000;
-}
-
-.green {
-  background-color: #00ff00;
-  width: 20%;
+  background-color: #000000;
   height: 300px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 50px;
 }

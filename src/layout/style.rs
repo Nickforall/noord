@@ -49,7 +49,6 @@ pub fn create_styletree<'a>(root: &'a Node, stylesheet: &super::css::Stylesheet)
     root = &root.children.first().unwrap().children.last().unwrap();
   }
 
-
   StyledNode {
     node: root,
     values: match root.node_type {

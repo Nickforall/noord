@@ -9,6 +9,7 @@ type AttrMap = HashMap<String, String>;
 pub struct ElementData {
   pub tag_name: String,
   pub attributes: AttrMap,
+  pub is_debug_mode: bool,
 }
 
 impl ElementData {
@@ -31,6 +32,25 @@ pub struct Node {
 
   // data specific to each node type:
   pub node_type: NodeType,
+
+  pub is_debug_mode: bool,
+}
+
+impl Node {
+  /// Used to identify the given element while debugging
+  pub fn debug_identifier(&self) -> String {
+    match &self.node_type {
+      NodeType::Document() => "Node#Document".to_owned(),
+      NodeType::Text(string) => format!("Node#Text({})", &string).to_owned(),
+      NodeType::Element(data) => format!(
+        "Node#Element#{} classlist={:?} id={}",
+        data.tag_name,
+        data.classlist().unwrap_or(HashSet::new()),
+        data.id().unwrap_or(&"none".to_owned())
+      )
+      .to_owned(),
+    }
+  }
 }
 
 #[derive(Debug)]
@@ -44,6 +64,7 @@ pub fn document(children: Vec<Node>) -> Node {
   Node {
     children: children,
     node_type: NodeType::Document(),
+    is_debug_mode: false,
   }
 }
 
@@ -51,16 +72,21 @@ pub fn text(data: String) -> Node {
   Node {
     children: Vec::new(),
     node_type: NodeType::Text(data),
+    is_debug_mode: false,
   }
 }
 
 pub fn elem(name: String, attrs: AttrMap, children: Vec<Node>) -> Node {
+  // used to print debug messages in the layout pipeline for processes affecting this element.
+  let is_debug_mode = attrs.contains_key("__noord_debug");
   Node {
     children: children,
     node_type: NodeType::Element(ElementData {
       tag_name: name,
       attributes: attrs,
+      is_debug_mode,
     }),
+    is_debug_mode,
   }
 }
 

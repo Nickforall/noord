@@ -62,7 +62,7 @@ impl std::fmt::Debug for Rect {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(
       f,
-      "Rect {{ x: {}, y: {} }} {} x {}",
+      "Rect {{ x: {}, y: {}, w: {}, h: {} }}",
       self.x, self.y, self.width, self.height
     )
   }
@@ -74,10 +74,6 @@ struct SimpleDimensions {
 }
 
 impl SimpleDimensions {
-  pub fn new(width: f32, height: f32) -> Self {
-    SimpleDimensions { width, height }
-  }
-
   pub fn from_dimension(rect: Rect) -> Self {
     SimpleDimensions {
       width: rect.width,
@@ -371,7 +367,7 @@ impl<'a> LayoutBox<'a> {
       child.layout(*d, &original_container);
 
       // Increment the height so each child is laid out below the previous one.
-      d.content.height = d.content.height + child.dimensions.padding_box().height;
+      d.content.height = d.content.height + child.dimensions.margin_box().height;
     }
   }
 

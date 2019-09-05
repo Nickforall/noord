@@ -7,28 +7,12 @@ pub struct Color {
 }
 
 impl Color {
-  pub fn new(r: u8, g: u8, b: u8) -> Self {
-    Self::new_alpha(r, g, b, 255)
-  }
-
   pub fn new_alpha(r: u8, g: u8, b: u8, a: u8) -> Self {
     Color { r, g, b, a }
   }
 
   pub fn black() -> Self {
     Color::new_alpha(0, 0, 0, 255)
-  }
-
-  pub fn red() -> Self {
-    Color::new_alpha(255, 0, 0, 255)
-  }
-
-  pub fn green() -> Self {
-    Color::new_alpha(0, 255, 0, 255)
-  }
-
-  pub fn blue() -> Self {
-    Color::new_alpha(0, 0, 255, 255)
   }
 
   pub fn transparent() -> Self {

@@ -43,7 +43,7 @@ fn main() {
         .read_to_string(&mut css_buffer)
         .unwrap();
 
-    let stylesheet = layout::css::parse(String::from(include_str!("../support/style.css")));
+    let stylesheet = layout::css::parse(css_buffer);
     let style_tree = layout::style::create_styletree(&dom, &stylesheet);
 
     let mut closed = false;
