@@ -304,12 +304,30 @@ impl Parser {
 
   fn parse_color(&mut self) -> Value {
     assert_eq!(self.consume_char(), '#');
-    Value::ColorValue(Color {
-      r: self.parse_hex_pair(),
-      g: self.parse_hex_pair(),
-      b: self.parse_hex_pair(),
-      a: 255,
-    })
+    let hex_value = self.peek_while(valid_hex_char);
+
+    match hex_value.len() {
+      3 => Value::ColorValue(Color {
+        r: self.parse_hex_single(),
+        g: self.parse_hex_single(),
+        b: self.parse_hex_single(),
+        a: 255,
+      }),
+      6 => Value::ColorValue(Color {
+        r: self.parse_hex_pair(),
+        g: self.parse_hex_pair(),
+        b: self.parse_hex_pair(),
+        a: 255,
+      }),
+      _ => panic!("incorrect hex color definition"),
+    }
+  }
+
+  fn parse_hex_single(&mut self) -> u8 {
+    let h = self.consume_char();
+    let dupe = format!("{}{}", h, h);
+
+    u8::from_str_radix(dupe.as_str(), 16).unwrap()
   }
 
   /// Parse two hexadecimal digits.
@@ -341,6 +359,20 @@ impl Parser {
     result
   }
 
+  /// Reads characters until `test` returns false. Does not consume
+  fn peek_while<F>(&mut self, test: F) -> String
+  where
+    F: Fn(char) -> bool,
+  {
+    let mut result = String::new();
+    let mut index: usize = 0;
+    while !self.eof() && test(self.peek_at(index)) {
+      index = index + 1;
+      result.push(self.next_char());
+    }
+    result
+  }
+
   /// Return the current character, and advance self.pos to the next character.
   fn consume_char(&mut self) -> char {
     let mut iter = self.input[self.pos..].char_indices();
@@ -355,6 +387,11 @@ impl Parser {
     self.input[self.pos..].chars().next().unwrap()
   }
 
+  /// Read the (current + offset) character without consuming it.
+  fn peek_at(&self, offset: usize) -> char {
+    self.input[(self.pos + offset)..].chars().next().unwrap()
+  }
+
   /// Return true if all input is consumed.
   fn eof(&self) -> bool {
     self.pos >= self.input.len()
@@ -364,6 +401,13 @@ impl Parser {
 fn valid_identifier_char(c: char) -> bool {
   match c {
     'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' => true, // TODO: Include U+00A0 and higher.
+    _ => false,
+  }
+}
+
+fn valid_hex_char(c: char) -> bool {
+  match c {
+    'a'..='f' | 'A'..='F' | '0'..='9' => true,
     _ => false,
   }
 }
