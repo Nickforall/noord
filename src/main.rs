@@ -77,7 +77,7 @@ fn main() {
         events_loop.poll_events(|ev| match ev {
             glutin::Event::WindowEvent { event, .. } => match event {
                 glutin::WindowEvent::CloseRequested => closed = true,
-                glutin::WindowEvent::Resized(_) => should_redraw = true,
+                glutin::WindowEvent::Refresh => should_redraw = true,
                 _ => (),
             },
             _ => (),

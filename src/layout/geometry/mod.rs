@@ -412,6 +412,8 @@ pub fn layout_geometry_tree<'a>(
   node: &'a StyledNode<'a>,
   mut containing_block: Dimensions,
 ) -> LayoutBox<'a> {
+  let layout_start = std::time::Instant::now();
+
   // The layout algorithm expects the container height to start at 0.
   let original_container = SimpleDimensions::from_dimension(containing_block.content.clone());
   containing_block.content.height = 0.0;
@@ -419,5 +421,11 @@ pub fn layout_geometry_tree<'a>(
   let mut root_box = build_geometry_tree(node);
   root_box.layout(containing_block, &original_container);
   root_box.dimensions.content.height = original_container.height;
+
+  println!(
+    "Layout step took {} microseconds",
+    layout_start.elapsed().as_micros()
+  );
+
   return root_box;
 }
