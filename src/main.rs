@@ -27,7 +27,7 @@ fn main() {
     // 1. The **winit::EventsLoop** for handling events.
     let mut events_loop = glutin::EventsLoop::new();
     // 2. Parameters for building the Window.
-    let wb = glutin::WindowBuilder::new();
+    let wb = glutin::WindowBuilder::new().with_title("Noord");
     // 3. Parameters for building the OpenGL context.
     let cb = glutin::ContextBuilder::new();
     // 4. Build the Display with the given window and OpenGL context parameters and register the
@@ -62,8 +62,6 @@ fn main() {
                 height: display_dimensions.1 as f32,
             });
             let geom_tree = layout::geometry::layout_geometry_tree(&style_tree, window_dimensions);
-
-            // println!("{:#?}", geom_tree);
 
             let list = gfx::display_list::build_display_list(&geom_tree);
             gfx::render_list(&list, display.clone(), &mut target);
